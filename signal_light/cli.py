@@ -25,14 +25,69 @@ HOOK_CONTROL_SIGNALS = {"turn_end"}
 
 
 class DryRunLight:
+    def __init__(self, *, label: str = "signal", verbose_frames: bool = False) -> None:
+        self.label = label
+        self.verbose_frames = verbose_frames
+        self._last_signature: tuple[str, float, float, float] | None = None
+        self._printed_animation_hint = False
+
     def write(self, *, green: bool = False, yellow: bool = False, red: bool = False) -> None:
-        print(f"green={int(green)} yellow={int(yellow)} red={int(red)}")
+        signature = ("digital", float(int(green)), float(int(yellow)), float(int(red)))
+        if signature == self._last_signature:
+            return
+        self._last_signature = signature
+        print(f"[dry-run] lamp: {self._describe_digital(green=green, yellow=yellow, red=red)}")
 
     def write_brightness(self, *, green: float = 0.0, yellow: float = 0.0, red: float = 0.0) -> None:
-        print(f"green={green:.2f} yellow={yellow:.2f} red={red:.2f}")
+        if not self.verbose_frames:
+            if not self._printed_animation_hint:
+                self._printed_animation_hint = True
+                print(f"[dry-run] lamp: {self._describe_animation()}")
+            return
+
+        signature = ("brightness", round(green, 2), round(yellow, 2), round(red, 2))
+        if signature == self._last_signature:
+            return
+        self._last_signature = signature
+        print(f"[dry-run] state={self.label} brightness: green={green:.2f} yellow={yellow:.2f} red={red:.2f}")
 
     def off(self) -> None:
         self.write()
+
+    def _describe_animation(self) -> str:
+        descriptions = {
+            "working": "working animation",
+            "thinking": "thinking animation",
+            "tool_done": "working animation",
+            "attention": "yellow flashing",
+            "permission": "red flashing",
+            "blocked": "red flashing",
+            "done": "yellow flashing",
+            "test": "test animation",
+        }
+        return descriptions.get(self.label, f"{self.label} animation")
+
+    def _describe_digital(self, *, green: bool, yellow: bool, red: bool) -> str:
+        if green and not yellow and not red:
+            return "green steady"
+        if yellow and not green and not red:
+            return "yellow steady"
+        if red and not green and not yellow:
+            return "red steady"
+        if yellow and red and not green:
+            return "yellow + red steady"
+        if green and yellow and red:
+            return "all lights on"
+        if not green and not yellow and not red:
+            return "lights off"
+        active = []
+        if green:
+            active.append("green")
+        if yellow:
+            active.append("yellow")
+        if red:
+            active.append("red")
+        return " + ".join(active)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -139,7 +194,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_test(dry_run=args.dry_run)
     if args.command == "worker":
         return run_worker(args.signal, speed=args.speed)
-
     parser.print_help()
     return 2
 
@@ -166,7 +220,7 @@ def play_signal(signal_name: str, *, dry_run: bool = False, speed: float = 1.0, 
             if signal.repeat:
                 _preview_repeating_signal(signal, speed=speed)
             else:
-                signal.play(DryRunLight(), speed=speed)
+                signal.play(DryRunLight(label=signal.name), speed=speed)
         else:
             if signal.name in {"idle", "off"}:
                 clear_session_state()
@@ -195,13 +249,13 @@ def play_hook_signal(
 
     if dry_run:
         if not quiet:
-            print(f"Session {session_key}: {signal_name}")
+            print(f"[dry-run] detected: {signal_name}")
         if signal is None:
             return 0
         if signal.repeat:
             _preview_repeating_signal(signal, speed=speed)
         else:
-            signal.play(DryRunLight(), speed=speed)
+            signal.play(DryRunLight(label=signal.name), speed=speed)
         return 0
 
     try:
@@ -217,7 +271,7 @@ def play_hook_signal(
 
 
 def _preview_repeating_signal(signal: AgentSignal, *, speed: float) -> None:
-    signal.play(DryRunLight(), speed=speed, cycles=2)
+    signal.play(DryRunLight(label=signal.name), speed=speed, cycles=2)
 
 
 def run_test(*, dry_run: bool = False) -> int:
@@ -236,7 +290,7 @@ def run_test(*, dry_run: bool = False) -> int:
 
     try:
         if dry_run:
-            test_signal.play(DryRunLight())
+            test_signal.play(DryRunLight(label="test", verbose_frames=True))
         else:
             with SignalLight(LightMapping.from_env(os.environ)) as light:
                 test_signal.play(light)

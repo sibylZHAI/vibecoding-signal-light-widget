@@ -95,7 +95,7 @@ def apply_session_signal(session_key: str, signal_name: str, *, speed: float = 1
         elif signal_name in TURN_END_SIGNALS:
             current = sessions.get(session_key)
             current_signal = current.get("signal") if isinstance(current, dict) else None
-            if current_signal not in TURN_END_KEEP_SIGNALS:
+            if current_signal != "blocked":
                 should_show_session_end_notice = session_key in sessions
                 sessions.pop(session_key, None)
         else:
@@ -172,20 +172,26 @@ def clear_session_state() -> None:
 
 
 def aggregate_sessions(sessions: dict[str, object]) -> str:
-    signals = []
+    signals: list[tuple[str, float]] = []
     for value in sessions.values():
         if isinstance(value, dict):
             signal_name = value.get("signal")
+            updated_at = value.get("updated_at")
             if isinstance(signal_name, str):
-                signals.append(signal_name)
+                signals.append((signal_name, updated_at if isinstance(updated_at, (int, float)) else 0.0))
 
-    if any(signal_name in RED_SIGNALS for signal_name in signals):
-        return "blocked"
-    if any(signal_name == "permission" for signal_name in signals):
+    if any(signal_name == "blocked" for signal_name, _updated_at in signals):
         return "permission"
-    if any(signal_name in YELLOW_SIGNALS for signal_name in signals):
+
+    latest_working = max(
+        (updated_at for signal_name, updated_at in signals if signal_name in WORKING_SIGNALS),
+        default=0.0,
+    )
+    if any(signal_name == "permission" and updated_at >= latest_working for signal_name, updated_at in signals):
+        return "permission"
+    if any(signal_name in YELLOW_SIGNALS and updated_at >= latest_working for signal_name, updated_at in signals):
         return "attention"
-    if any(signal_name in WORKING_SIGNALS for signal_name in signals):
+    if any(signal_name in WORKING_SIGNALS for signal_name, _updated_at in signals):
         return "working"
     return "idle"
 
@@ -251,16 +257,35 @@ def _restore_session_end_notice(*, speed: float) -> None:
 def _state_lock() -> Iterator[None]:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     with LOCK_FILE.open("a+") as lock_file:
+        locked_with: str | None = None
         try:
-            import fcntl
+            if os.name == "nt":
+                import msvcrt
 
-            fcntl.flock(lock_file, fcntl.LOCK_EX)
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
+                locked_with = "msvcrt"
+            else:
+                import fcntl
+
+                fcntl.flock(lock_file, fcntl.LOCK_EX)
+                locked_with = "fcntl"
             yield
         finally:
-            try:
-                fcntl.flock(lock_file, fcntl.LOCK_UN)
-            except Exception:
-                pass
+            if locked_with == "msvcrt":
+                try:
+                    import msvcrt
+
+                    lock_file.seek(0)
+                    msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+                except Exception:
+                    pass
+            elif locked_with == "fcntl":
+                try:
+                    import fcntl
+
+                    fcntl.flock(lock_file, fcntl.LOCK_UN)
+                except Exception:
+                    pass
 
 
 def _read_session_state() -> dict[str, object]:
@@ -331,7 +356,6 @@ def _play_with_retries(signal: AgentSignal, *, speed: float) -> None:
             time.sleep(0.15)
 
     raise last_error or SignalLightError("Failed to apply signal state.")
-
 
 def _spawn_worker_process(
     *,
@@ -548,6 +572,9 @@ def _terminate(pid: int) -> None:
 
 
 def _is_running(pid: int) -> bool:
+    if os.name == "nt":
+        return _is_running_windows(pid)
+
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -555,3 +582,22 @@ def _is_running(pid: int) -> bool:
     except PermissionError:
         return True
     return True
+
+
+def _is_running_windows(pid: int) -> bool:
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        synchronize = 0x00100000
+        process = ctypes.windll.kernel32.OpenProcess(synchronize, False, pid)
+        if not process:
+            return False
+        try:
+            wait_timeout = 0x00000102
+            result = ctypes.windll.kernel32.WaitForSingleObject(wintypes.HANDLE(process), 0)
+            return result == wait_timeout
+        finally:
+            ctypes.windll.kernel32.CloseHandle(wintypes.HANDLE(process))
+    except Exception:
+        return False

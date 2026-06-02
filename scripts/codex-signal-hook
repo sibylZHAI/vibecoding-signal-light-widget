@@ -7,12 +7,42 @@ cd "$ROOT_DIR"
 export UV_CACHE_DIR="${SIGNAL_LIGHT_UV_CACHE_DIR:-/private/tmp/signal-light-uv-cache}"
 export PYTHONDONTWRITEBYTECODE="${PYTHONDONTWRITEBYTECODE:-1}"
 
+find_python() {
+  if [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
+    printf '%s\n' "$ROOT_DIR/.venv/bin/python"
+    return 0
+  fi
+
+  if [[ -x "$ROOT_DIR/.venv/Scripts/python.exe" ]]; then
+    printf '%s\n' "$ROOT_DIR/.venv/Scripts/python.exe"
+    return 0
+  fi
+
+  if command -v python >/dev/null 2>&1; then
+    printf '%s\n' "$(command -v python)"
+    return 0
+  fi
+
+  if command -v py >/dev/null 2>&1; then
+    printf '%s\n' "$(command -v py)"
+    return 0
+  fi
+
+  if command -v python3 >/dev/null 2>&1; then
+    printf '%s\n' "$(command -v python3)"
+    return 0
+  fi
+
+  return 1
+}
+
 if [[ "${SIGNAL_LIGHT_USE_UV:-0}" == "1" ]] && command -v uv >/dev/null 2>&1; then
   exec uv run python -m signal_light codex-hook "$@"
 fi
 
-if [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
-  exec "$ROOT_DIR/.venv/bin/python" -m signal_light codex-hook "$@"
+if PYTHON_CMD="$(find_python)"; then
+  exec "$PYTHON_CMD" -m signal_light codex-hook "$@"
 fi
 
-exec python3 -m signal_light codex-hook "$@"
+echo "No usable Python interpreter found. Install Python or create .venv before running codex-signal-hook." >&2
+exit 1

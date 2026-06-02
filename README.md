@@ -202,6 +202,16 @@ Preview without hardware:
 ./scripts/signal-light play permission --dry-run
 ```
 
+On Windows, you can use the PowerShell wrappers instead:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\signal-light.ps1 list
+powershell -ExecutionPolicy Bypass -File .\scripts\signal-light.ps1 play working --dry-run
+powershell -ExecutionPolicy Bypass -File .\scripts\codex-signal-hook.ps1 PermissionRequest --dry-run
+```
+
+If you prefer Git Bash on Windows, run the existing `scripts/*` wrappers from Git Bash. The wrappers now try `.venv`, then `python`, then `py`, and only use `python3` as a last fallback.
+
 Run a wiring test on the real MCP2221A setup:
 
 ```bash

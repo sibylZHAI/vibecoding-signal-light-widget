@@ -134,6 +134,8 @@ If `Stop` carries a `stop_reason` of `max_tokens` or `error`, the adapter uses `
 
 Add hooks to `~/.claude/settings.json` (or project `.claude/settings.json`):
 
+Replace `<PATH_TO_REPO>` below with your local clone path.
+
 ```json
 {
   "hooks": {
@@ -142,7 +144,7 @@ Add hooks to `~/.claude/settings.json` (or project `.claude/settings.json`):
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/liusixian/Develop/starlight36/signal-light/scripts/claude-code-signal-hook",
+            "command": "<PATH_TO_REPO>/scripts/claude-code-signal-hook",
             "timeout": 5
           }
         ],
@@ -154,7 +156,7 @@ Add hooks to `~/.claude/settings.json` (or project `.claude/settings.json`):
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/liusixian/Develop/starlight36/signal-light/scripts/claude-code-signal-hook",
+            "command": "<PATH_TO_REPO>/scripts/claude-code-signal-hook",
             "timeout": 5
           }
         ],
@@ -166,7 +168,7 @@ Add hooks to `~/.claude/settings.json` (or project `.claude/settings.json`):
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/liusixian/Develop/starlight36/signal-light/scripts/claude-code-signal-hook",
+            "command": "<PATH_TO_REPO>/scripts/claude-code-signal-hook",
             "timeout": 5
           }
         ],
@@ -178,7 +180,7 @@ Add hooks to `~/.claude/settings.json` (or project `.claude/settings.json`):
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/liusixian/Develop/starlight36/signal-light/scripts/claude-code-signal-hook",
+            "command": "<PATH_TO_REPO>/scripts/claude-code-signal-hook",
             "timeout": 5
           }
         ],
@@ -190,7 +192,7 @@ Add hooks to `~/.claude/settings.json` (or project `.claude/settings.json`):
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/liusixian/Develop/starlight36/signal-light/scripts/claude-code-signal-hook",
+            "command": "<PATH_TO_REPO>/scripts/claude-code-signal-hook",
             "timeout": 5
           }
         ],
@@ -202,7 +204,7 @@ Add hooks to `~/.claude/settings.json` (or project `.claude/settings.json`):
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/liusixian/Develop/starlight36/signal-light/scripts/claude-code-signal-hook",
+            "command": "<PATH_TO_REPO>/scripts/claude-code-signal-hook",
             "timeout": 10
           }
         ],
@@ -214,7 +216,7 @@ Add hooks to `~/.claude/settings.json` (or project `.claude/settings.json`):
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/liusixian/Develop/starlight36/signal-light/scripts/claude-code-signal-hook",
+            "command": "<PATH_TO_REPO>/scripts/claude-code-signal-hook",
             "timeout": 5
           }
         ],
@@ -226,7 +228,7 @@ Add hooks to `~/.claude/settings.json` (or project `.claude/settings.json`):
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/liusixian/Develop/starlight36/signal-light/scripts/claude-code-signal-hook",
+            "command": "<PATH_TO_REPO>/scripts/claude-code-signal-hook",
             "timeout": 5
           }
         ],
@@ -238,7 +240,7 @@ Add hooks to `~/.claude/settings.json` (or project `.claude/settings.json`):
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/liusixian/Develop/starlight36/signal-light/scripts/claude-code-signal-hook",
+            "command": "<PATH_TO_REPO>/scripts/claude-code-signal-hook",
             "timeout": 5
           }
         ],
@@ -255,6 +257,8 @@ Note: Unlike Codex hooks where the event name must be passed as an argument, Cla
 
 Add command hooks like this to `~/.codex/hooks.json`, keeping any existing hooks you already use:
 
+Replace `<PATH_TO_REPO>` below with your local clone path.
+
 ```json
 {
   "hooks": {
@@ -263,7 +267,7 @@ Add command hooks like this to `~/.codex/hooks.json`, keeping any existing hooks
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/liusixian/Develop/starlight36/signal-light/scripts/codex-signal-hook UserPromptSubmit",
+            "command": "<PATH_TO_REPO>/scripts/codex-signal-hook UserPromptSubmit",
             "timeout": 5
           }
         ]
@@ -274,7 +278,7 @@ Add command hooks like this to `~/.codex/hooks.json`, keeping any existing hooks
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/liusixian/Develop/starlight36/signal-light/scripts/codex-signal-hook PreToolUse",
+            "command": "<PATH_TO_REPO>/scripts/codex-signal-hook PreToolUse",
             "timeout": 5
           }
         ]
@@ -285,7 +289,7 @@ Add command hooks like this to `~/.codex/hooks.json`, keeping any existing hooks
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/liusixian/Develop/starlight36/signal-light/scripts/codex-signal-hook PermissionRequest",
+            "command": "<PATH_TO_REPO>/scripts/codex-signal-hook PermissionRequest",
             "timeout": 10
           }
         ]
@@ -296,7 +300,7 @@ Add command hooks like this to `~/.codex/hooks.json`, keeping any existing hooks
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/liusixian/Develop/starlight36/signal-light/scripts/codex-signal-hook Stop",
+            "command": "<PATH_TO_REPO>/scripts/codex-signal-hook Stop",
             "timeout": 5
           }
         ]

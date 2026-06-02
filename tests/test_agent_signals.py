@@ -172,6 +172,28 @@ def test_aggregate_keeps_permission_over_attention_and_working() -> None:
     assert aggregate == "permission"
 
 
+def test_aggregate_newer_working_clears_older_permission() -> None:
+    aggregate = aggregate_sessions(
+        {
+            "a": {"signal": "permission", "updated_at": 1},
+            "b": {"signal": "working", "updated_at": 2},
+        }
+    )
+
+    assert aggregate == "working"
+
+
+def test_aggregate_blocked_stays_over_newer_working() -> None:
+    aggregate = aggregate_sessions(
+        {
+            "a": {"signal": "blocked", "updated_at": 1},
+            "b": {"signal": "working", "updated_at": 2},
+        }
+    )
+
+    assert aggregate == "permission"
+
+
 def test_aggregate_returns_working_when_any_session_is_working() -> None:
     aggregate = aggregate_sessions(
         {
@@ -778,7 +800,7 @@ def test_session_done_notice_fires_when_other_sessions_still_working(tmp_path, m
     assert notices == [1.0]
 
 
-def test_apply_session_signal_keeps_permission_on_turn_end(tmp_path, monkeypatch) -> None:
+def test_apply_session_signal_clears_permission_on_turn_end(tmp_path, monkeypatch) -> None:
     applied: list[str] = []
     monkeypatch.setattr(runtime, "STATE_DIR", tmp_path)
     monkeypatch.setattr(runtime, "SESSION_FILE", tmp_path / "sessions.json")
@@ -786,6 +808,20 @@ def test_apply_session_signal_keeps_permission_on_turn_end(tmp_path, monkeypatch
     monkeypatch.setattr(runtime, "apply_signal", lambda signal, speed=1.0: applied.append(signal.name))
 
     assert apply_session_signal("session-a", "permission") == "permission"
+    assert apply_session_signal("session-a", "turn_end") == "idle"
+
+    assert runtime.read_session_snapshot()["aggregate"] == "idle"
+    assert applied == ["permission", "idle"]
+
+
+def test_apply_session_signal_keeps_blocked_on_turn_end(tmp_path, monkeypatch) -> None:
+    applied: list[str] = []
+    monkeypatch.setattr(runtime, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(runtime, "SESSION_FILE", tmp_path / "sessions.json")
+    monkeypatch.setattr(runtime, "LOCK_FILE", tmp_path / "state.lock")
+    monkeypatch.setattr(runtime, "apply_signal", lambda signal, speed=1.0: applied.append(signal.name))
+
+    assert apply_session_signal("session-a", "blocked") == "permission"
     assert apply_session_signal("session-a", "turn_end") == "permission"
 
     assert runtime.read_session_snapshot()["aggregate"] == "permission"

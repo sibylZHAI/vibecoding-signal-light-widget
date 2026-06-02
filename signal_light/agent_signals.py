@@ -179,9 +179,8 @@ SIGNALS: dict[str, AgentSignal] = {
         name="permission",
         summary="Codex 请求授权或需要你明确批准。",
         attention="需要立即关注。",
-        frames=_flash(yellow=True),
-        loops=12,
-        repeat=True,
+        frames=_state(yellow=True, red=True)[0],
+        leave_on=_state(yellow=True, red=True)[1],
     ),
     "blocked": AgentSignal(
         name="blocked",
